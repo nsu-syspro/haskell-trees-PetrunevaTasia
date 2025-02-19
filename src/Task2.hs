@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wall #-}
+{-# LANGUAGE InstanceSigs #-}
 -- The above pragma enables all warnings
 
 module Task2 where
@@ -33,7 +34,11 @@ type Cmp a = a -> a -> Ordering
 -- GT
 --
 compare :: Ord a => Cmp a
-compare = error "TODO: define compare"
+compare x y
+  | x == y = EQ
+  | x < y = LT
+  | x > y = GT
+  | otherwise = error "Can't compare"
 
 -- | Conversion of list to binary search tree
 -- using given comparison function
@@ -46,7 +51,23 @@ compare = error "TODO: define compare"
 -- Leaf
 --
 listToBST :: Cmp a -> [a] -> Tree a
-listToBST = error "TODO: define listToBST"
+listToBST _ [] = Leaf
+listToBST _ [x] = Branch x Leaf Leaf
+listToBST func (x : xs) = loop func (Branch x Leaf Leaf) xs
+
+
+loop :: Cmp a -> Tree a -> [a] -> Tree a
+loop _ tree [] = tree
+loop func tree [x] = tinsert func x tree
+loop func tree (x : xs) = loop func (tinsert func x tree) xs
+
+
+instance Eq Ordering where
+  (==) :: Ordering -> Ordering -> Bool
+  (==) LT LT = True
+  (==) EQ EQ = True
+  (==) GT GT = True
+  (==) _ _ = False
 
 -- | Conversion from binary search tree to list
 --
@@ -62,7 +83,8 @@ listToBST = error "TODO: define listToBST"
 -- []
 --
 bstToList :: Tree a -> [a]
-bstToList = error "TODO: define bstToList"
+bstToList Leaf = []
+bstToList (Branch x y z) = bstToList y ++ [x] ++ bstToList z
 
 -- | Tests whether given tree is a valid binary search tree
 -- with respect to given comparison function
@@ -77,7 +99,12 @@ bstToList = error "TODO: define bstToList"
 -- False
 --
 isBST :: Cmp a -> Tree a -> Bool
-isBST = error "TODO: define isBST"
+isBST func tree = compareList func (bstToList tree)
+
+compareList :: Cmp a -> [a] -> Bool
+compareList _ [] = True
+compareList _ [_] = True
+compareList func (x : y : xs) = func x y == LT && compareList func (y : xs)
 
 -- | Searches given binary search tree for
 -- given value with respect to given comparison
@@ -95,7 +122,12 @@ isBST = error "TODO: define isBST"
 -- Just 2
 --
 tlookup :: Cmp a -> a -> Tree a -> Maybe a
-tlookup = error "TODO: define tlookup"
+tlookup _ _ Leaf = Nothing
+tlookup func x (Branch y left right)
+  | func x y == EQ  = Just y
+  | func x y == LT = tlookup func x left
+  | func x y == GT = tlookup func x right
+  | otherwise = error "Can't do tlookup"
 
 -- | Inserts given value into given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -113,7 +145,12 @@ tlookup = error "TODO: define tlookup"
 -- Branch 'a' Leaf Leaf
 --
 tinsert :: Cmp a -> a -> Tree a -> Tree a
-tinsert = error "TODO: define tinsert"
+tinsert _ x Leaf = Branch x Leaf Leaf
+tinsert func x (Branch y left right)
+  | func x y == EQ = Branch x left right
+  | func x y == LT = Branch y (tinsert func x left) right
+  | func x y == GT = Branch y left (tinsert func x right)
+  | otherwise = error "Can't do tinsert"
 
 -- | Deletes given value from given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -129,4 +166,20 @@ tinsert = error "TODO: define tinsert"
 -- Leaf
 --
 tdelete :: Cmp a -> a -> Tree a -> Tree a
-tdelete = error "TODO: define tdelete"
+tdelete _ _ Leaf = Leaf
+tdelete func x (Branch y left right)
+  | func x y == LT = Branch y (tdelete func x left) right
+  | func x y == GT = Branch y left (tdelete func x right)
+  | isNotEmpty left && isNotEmpty right = Branch (findMin right) left (tdelete func (findMin right) right)
+  | isNotEmpty left = left
+  | isNotEmpty right = right
+  | otherwise = Leaf
+
+isNotEmpty :: Tree a -> Bool
+isNotEmpty Leaf = False
+isNotEmpty _ = True
+
+findMin :: Tree a -> a
+findMin (Branch x Leaf _) = x 
+findMin (Branch _ left _) = findMin left
+findMin _ = error "Can't find min"
