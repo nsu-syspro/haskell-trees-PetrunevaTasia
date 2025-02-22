@@ -14,7 +14,7 @@ import Task1 (Tree(..))
 
 -- | Ordering enumeration
 data Ordering = LT | EQ | GT
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Binary comparison function indicating whether first argument is less, equal or
 -- greater than the second one (returning 'LT', 'EQ' or 'GT' respectively)
@@ -61,13 +61,6 @@ loop _ tree [] = tree
 loop func tree [x] = tinsert func x tree
 loop func tree (x : xs) = loop func (tinsert func x tree) xs
 
-
-instance Eq Ordering where
-  (==) :: Ordering -> Ordering -> Bool
-  (==) LT LT = True
-  (==) EQ EQ = True
-  (==) GT GT = True
-  (==) _ _ = False
 
 -- | Conversion from binary search tree to list
 --
@@ -123,11 +116,12 @@ compareList func (x : y : xs) = func x y == LT && compareList func (y : xs)
 --
 tlookup :: Cmp a -> a -> Tree a -> Maybe a
 tlookup _ _ Leaf = Nothing
-tlookup func x (Branch y left right)
-  | func x y == EQ  = Just y
-  | func x y == LT = tlookup func x left
-  | func x y == GT = tlookup func x right
-  | otherwise = error "Can't do tlookup"
+tlookup func x (Branch y left right) = 
+  case func x y of
+    EQ -> Just y
+    LT -> tlookup func x left
+    GT -> tlookup func x right
+
 
 -- | Inserts given value into given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -146,11 +140,11 @@ tlookup func x (Branch y left right)
 --
 tinsert :: Cmp a -> a -> Tree a -> Tree a
 tinsert _ x Leaf = Branch x Leaf Leaf
-tinsert func x (Branch y left right)
-  | func x y == EQ = Branch x left right
-  | func x y == LT = Branch y (tinsert func x left) right
-  | func x y == GT = Branch y left (tinsert func x right)
-  | otherwise = error "Can't do tinsert"
+tinsert func x (Branch y left right) =
+  case func x y of
+    EQ -> Branch x left right
+    LT -> Branch y (tinsert func x left) right
+    GT -> Branch y left (tinsert func x right)
 
 -- | Deletes given value from given binary search tree
 -- preserving its BST properties with respect to given comparison

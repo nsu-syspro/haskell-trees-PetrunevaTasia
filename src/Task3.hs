@@ -8,7 +8,7 @@ module Task3 where
 import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
 import Task1 (Tree(..))
-import Task2 (Ordering, listToBST, bstToList, tinsert, tdelete, compare)
+import Task2 (listToBST, bstToList, tinsert, tdelete, compare, tlookup, Cmp)
 
 -- * Type definitions
 
@@ -30,7 +30,8 @@ listToMap :: Ord k => [(k, v)] -> Map k v
 listToMap = listToBST compareMap
 
 
-compareMap :: Ord a => (a, b) -> (a, b) -> Ordering
+
+compareMap :: Ord k => Cmp (k, v)
 compareMap (x, _) (y, _) = compare x y
 
 -- | Conversion from 'Map' to association list sorted by key
@@ -58,17 +59,9 @@ mapToList = bstToList
 -- Nothing
 --
 mlookup :: Ord k => k -> Map k v -> Maybe v
-mlookup x tree =
-    case findTuple x tree of
-        Nothing -> Nothing
-        Just (_, t) -> Just t
-
-findTuple :: Ord k => k -> Map k v -> Maybe (k, v)
-findTuple _ Leaf = Nothing
-findTuple x (Branch (a, b) left right)
-  | x == a = Just (a, b)
-  | x < a = findTuple x left
-  | otherwise = findTuple x right
+mlookup x tree = case tlookup compareMap (x, undefined) tree of
+  Nothing -> Nothing
+  Just (_, b) -> Just b
 
 -- | Inserts given key and value into given 'Map'
 --
@@ -100,7 +93,4 @@ minsert k v = tinsert compareMap (k, v)
 -- Leaf
 --
 mdelete :: Ord k => k -> Map k v -> Map k v
-mdelete x tree =
-    case findTuple x tree of
-        Nothing -> tree
-        Just t -> tdelete compareMap t tree
+mdelete x = tdelete compareMap (x, undefined)
