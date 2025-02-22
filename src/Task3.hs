@@ -8,6 +8,7 @@ module Task3 where
 import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
 import Task1 (Tree(..))
+import Task2 (listToBST, bstToList, tinsert, tdelete, compare, tlookup, Cmp)
 
 -- * Type definitions
 
@@ -26,7 +27,12 @@ type Map k v = Tree (k, v)
 -- Leaf
 --
 listToMap :: Ord k => [(k, v)] -> Map k v
-listToMap = error "TODO: define listToMap"
+listToMap = listToBST compareMap
+
+
+
+compareMap :: Ord k => Cmp (k, v)
+compareMap (x, _) (y, _) = compare x y
 
 -- | Conversion from 'Map' to association list sorted by key
 --
@@ -38,7 +44,7 @@ listToMap = error "TODO: define listToMap"
 -- []
 --
 mapToList :: Map k v -> [(k, v)]
-mapToList = error "TODO: define mapToList"
+mapToList = bstToList
 
 -- | Searches given 'Map' for a value associated with given key
 --
@@ -48,12 +54,14 @@ mapToList = error "TODO: define mapToList"
 -- Usage example:
 --
 -- >>> mlookup 1 (Branch (2,'a') (Branch (1,'b') Leaf Leaf) (Branch (3,'c') Leaf Leaf))
--- Just 'a'
+-- Just 'b'
 -- >>> mlookup 'a' Leaf
 -- Nothing
 --
 mlookup :: Ord k => k -> Map k v -> Maybe v
-mlookup = error "TODO: define mlookup"
+mlookup x tree = case tlookup compareMap (x, undefined) tree of
+  Nothing -> Nothing
+  Just (_, b) -> Just b
 
 -- | Inserts given key and value into given 'Map'
 --
@@ -65,12 +73,12 @@ mlookup = error "TODO: define mlookup"
 -- >>> minsert 0 'd' (Branch (2,'a') (Branch (1,'b') Leaf Leaf) (Branch (3,'c') Leaf Leaf))
 -- Branch (2,'a') (Branch (1,'b') (Branch (0,'d') Leaf Leaf) Leaf) (Branch (3,'c') Leaf Leaf)
 -- >>> minsert 1 'X' (Branch (2,'a') (Branch (1,'b') Leaf Leaf) (Branch (3,'c') Leaf Leaf))
--- Branch (2,'a') (Branch (1,'X') Leaf Leaf) (Branch (3,'c' Leaf Leaf)
+-- Branch (2,'a') (Branch (1,'X') Leaf Leaf) (Branch (3,'c') Leaf Leaf)
 -- >>> minsert 1 'X' Leaf
 -- Branch (1,'X') Leaf Leaf
 --
 minsert :: Ord k => k -> v -> Map k v -> Map k v
-minsert = error "TODO: define minsert"
+minsert k v = tinsert compareMap (k, v)
 
 -- | Deletes given key from given 'Map'
 --
@@ -85,4 +93,4 @@ minsert = error "TODO: define minsert"
 -- Leaf
 --
 mdelete :: Ord k => k -> Map k v -> Map k v
-mdelete = error "TODO: define mdelete"
+mdelete x = tdelete compareMap (x, undefined)
